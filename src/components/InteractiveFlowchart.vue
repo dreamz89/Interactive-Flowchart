@@ -1,5 +1,5 @@
 <template>
-  <svg id="flowchart" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 9000 11090" enable-background="new 0 0 9000 11090" xml:space="preserve">
+  <svg id="flowchart" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" :viewBox="viewBox" enable-background="new 0 0 9000 11090" xml:space="preserve">
     <g id="BG">
     	<rect fill="#A01010" width="9000" height="11130"/>
     </g>
@@ -6894,61 +6894,103 @@ export default {
   data() {
     return {
       padding: 100,
-      duration: null
+      travelling: false,
+      targetPath: null,
+      offset: 0,
+      x: null,
+      y: null,
+      width: null,
+      height: null
     }
   },
   mounted() {
     var flowchart = document.getElementById('flowchart')
     var start = flowchart.getElementById('n.start').getBBox()
-    var startView = [
-      start.x - this.padding,
-      start.y - this.padding,
-      start.width + 2 * this.padding,
-      start.height + 2 * this.padding
-    ].join()
-    flowchart.setAttribute('viewBox', startView)
+    this.x = start.x + (start.width / 2)
+    this.y = start.y + (start.height / 2)
+    this.width = start.width + 2 * this.padding
+    this.height = start.height + 2 * this.padding
 
     var choices = flowchart.querySelectorAll('*[id^="c."]')
     // For IE compatibility
     Array.prototype.forEach.call(choices, (choice) => {
       var pathElement = flowchart.getElementById(choice.id.replace('c.', 'p.'))
       var pathLength = pathElement.getTotalLength()
-      this.duration = pathLength / 1000
       this.preparePath(pathElement, pathLength)
 
       flowchart.getElementById(choice.id).addEventListener('click', () => {
-        this.drawPath(pathElement, pathLength)
-        this.moveTo(choice.id)
+        var duration = pathLength / 1000
+        this.drawPath(pathElement, pathLength, duration)
+        this.moveTo(choice.id, pathElement, pathLength, duration)
       })
     })
+  },
+  computed: {
+    viewBox () {
+      if (this.travelling) {
+        const {x, y} = getPointAtLength(this.targetPath, this.offset)
+        return [
+          x - (this.width / 2),
+          y - (this.height / 2),
+          this.width,
+          this.height
+        ].join(',')
+      } else {
+        return [
+          this.x - (this.width / 2),
+          this.y - (this.height / 2),
+          this.width,
+          this.height
+        ].join(',')
+      }
+    }
   },
   methods: {
     preparePath(pathElement, pathLength) {
       pathElement.setAttribute('stroke-dasharray', pathLength)
       pathElement.setAttribute('stroke-dashoffset', pathLength)
     },
-    drawPath(pathElement, pathLength) {
-      TweenMax.to(pathElement, this.duration, {
-        attr: { 'stroke-dashoffset': 0 }
+    drawPath(pathElement, pathLength, duration) {
+      TweenMax.to(pathElement, duration, {
+        attr: { 'stroke-dashoffset': 0 },
+        ease: Power1.easeOut,
       })
     },
-    moveTo(choice) {
+    moveTo(choice, pathElement, pathLength, duration) {
       var nextNode = choice.slice(2).split('--')[1]
-
       var n = flowchart.getElementById('n.' + nextNode).getBBox()
-      var nextNodeView = [
-        n.x - this.padding,
-        n.y - this.padding,
-        n.width + 2 * this.padding,
-        n.height + 2 * this.padding
-      ].join()
+      const finalPoint = pathElement.getPointAtLength(pathLength)
 
-      TweenMax.to(flowchart, this.duration, {
-        attr: { viewBox: nextNodeView },
-        ease: Circ.easeOut
+      this.x = n.x + (n.width / 2)
+      this.y = n.y + (n.height / 2)
+
+      var difference = [this.x - finalPoint.x, this.y - finalPoint.y].join(',')
+      this.targetPath = pathElement.getAttribute('d') + 'l' + difference
+      this.travelling = true
+
+      TweenMax.fromTo(this.$data, duration, { offset: 0 }, {
+        offset: getPathLength(this.targetPath),
+        width: n.width + 2 * this.padding,
+        height: n.height + 2 * this.padding,
+        ease: Power1.easeOut,
+        onComplete: () => {
+          this.travelling = false
+        }
       })
     }
   }
+}
+
+const $path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+
+export function getPathLength (d) {
+  $path.setAttribute('d', d)
+  return Math.ceil($path.getTotalLength())
+}
+
+export function getPointAtLength (d, offset) {
+  $path.setAttribute('d', d)
+  return $path.getPointAtLength(offset)
 }
 </script>
 
