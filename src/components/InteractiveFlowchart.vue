@@ -6904,23 +6904,26 @@ export default {
     }
   },
   mounted() {
-    var flowchart = document.getElementById('flowchart')
-    var start = flowchart.getElementById('n.start').getBBox()
-    this.x = start.x + (start.width / 2)
-    this.y = start.y + (start.height / 2)
+    const flowchart = document.getElementById('flowchart')
+    const start = flowchart.getElementById('n.start').getBBox()
+    this.x = start.x + (start.width / 2) // center point of node
+    this.y = start.y + (start.height / 2)// center point of node
     this.width = start.width + 2 * this.padding
     this.height = start.height + 2 * this.padding
 
-    var choices = flowchart.querySelectorAll('*[id^="c."]')
+    const choices = flowchart.querySelectorAll('*[id^="c."]')
     // For IE compatibility
     Array.prototype.forEach.call(choices, (choice) => {
-      var pathElement = flowchart.getElementById(choice.id.replace('c.', 'p.'))
-      var pathLength = pathElement.getTotalLength()
-      this.preparePath(pathElement, pathLength)
+      const pathElement = flowchart.getElementById(choice.id.replace('c.', 'p.'))
+      const pathLength = pathElement.getTotalLength()
+
+      // path not showing initially
+      pathElement.setAttribute('stroke-dasharray', pathLength)
+      pathElement.setAttribute('stroke-dashoffset', pathLength)
 
       flowchart.getElementById(choice.id).addEventListener('click', () => {
-        var duration = pathLength / 1000
-        this.drawPath(pathElement, pathLength, duration)
+        const duration = pathLength / 1000
+        this.drawPath(pathElement, duration)
         this.moveTo(choice.id, pathElement, pathLength, duration)
       })
     })
@@ -6930,7 +6933,7 @@ export default {
       if (this.travelling) {
         const {x, y} = getPointAtLength(this.targetPath, this.offset)
         return [
-          x - (this.width / 2),
+          x - (this.width / 2), // so that viewbox is topleft
           y - (this.height / 2),
           this.width,
           this.height
@@ -6946,33 +6949,30 @@ export default {
     }
   },
   methods: {
-    preparePath(pathElement, pathLength) {
-      pathElement.setAttribute('stroke-dasharray', pathLength)
-      pathElement.setAttribute('stroke-dashoffset', pathLength)
-    },
-    drawPath(pathElement, pathLength, duration) {
+    drawPath(pathElement, duration) {
       TweenMax.to(pathElement, duration, {
         attr: { 'stroke-dashoffset': 0 },
         ease: Power1.easeOut,
       })
     },
     moveTo(choice, pathElement, pathLength, duration) {
-      var nextNode = choice.slice(2).split('--')[1]
-      var n = flowchart.getElementById('n.' + nextNode).getBBox()
+      const nextNode = choice.slice(2).split('--')[1]
+      const n = flowchart.getElementById('n.' + nextNode).getBBox()
       const finalPoint = pathElement.getPointAtLength(pathLength)
 
       this.x = n.x + (n.width / 2)
       this.y = n.y + (n.height / 2)
 
-      var difference = [this.x - finalPoint.x, this.y - finalPoint.y].join(',')
+      // so that viewbox continues on from end of path to middle of node
+      const difference = [this.x - finalPoint.x, this.y - finalPoint.y].join(',')
       this.targetPath = pathElement.getAttribute('d') + 'l' + difference
-      this.travelling = true
 
-      TweenMax.fromTo(this.$data, duration, { offset: 0 }, {
-        offset: getPathLength(this.targetPath),
+      this.travelling = true
+      TweenMax.fromTo(this.$data, duration, { offset: 0 },
+      { offset: getPathLength(this.targetPath),
         width: n.width + 2 * this.padding,
         height: n.height + 2 * this.padding,
-        ease: Power1.easeOut,
+        ease: Power1.easeInOut,
         onComplete: () => {
           this.travelling = false
         }
@@ -6982,13 +6982,13 @@ export default {
 }
 
 const $path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-
-export function getPathLength (d) {
+// duplicate the d of the path
+function getPathLength (d) {
   $path.setAttribute('d', d)
   return Math.ceil($path.getTotalLength())
 }
 
-export function getPointAtLength (d, offset) {
+function getPointAtLength (d, offset) {
   $path.setAttribute('d', d)
   return $path.getPointAtLength(offset)
 }
