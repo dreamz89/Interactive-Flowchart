@@ -2978,7 +2978,7 @@ function getPointAtLength (d, offset) {
     border-radius: 30px;
     border: 1px solid rgba(12,43,87,.5);
     text-align: center;
-    font-family: 'Courgette', cursive;
+    font-family: 'Courgette-Regular';
     font-size: 36px;
     color: white;
   }
@@ -2988,7 +2988,7 @@ function getPointAtLength (d, offset) {
   button {
     display: block;
     margin: 0 auto;
-    font-family: 'Fira Sans', sans-serif;
+    font-family: 'FiraSans-Regular';
     padding: 5px 25px;
     border-radius: 25px;
     outline: none;
@@ -3000,5 +3000,18 @@ function getPointAtLength (d, offset) {
   /* all choices to look selectable */
   g[id^="c."] {
     cursor: pointer;
+  }
+  @font-face {
+    font-family: Courgette-Regular;
+    src: url(../assets/Courgette-Regular.ttf);
+  }
+  @font-face {
+    font-family: FiraSans-Regular;
+    src: url(../assets/FiraSans-Regular.ttf);
+  }
+  @media only screen and (max-width: 420px) {
+    #intro {
+      font-size: 30px;
+    }
   }
 </style>
