@@ -3005,6 +3005,14 @@ function getPointAtLength (d, offset) {
   g[id^="c."] {
     cursor: pointer;
   }
+  g[id^="c."]:hover > path {
+    transform-origin: center center;
+    transform-box: fill-box;
+    transform: scale(1.03);
+  }
+  g[id^="c."]:hover > text {
+    font-size: 20.8px;
+  }
   @font-face {
     font-family: Courgette-Regular;
     src: url(../assets/Courgette-Regular.ttf);
