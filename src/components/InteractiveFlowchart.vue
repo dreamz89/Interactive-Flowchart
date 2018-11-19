@@ -1,8 +1,11 @@
 <template>
   <div>
     <div id="intro" ref="intro">
-      <p>Which StraitsTimes interactive graphics team member are you?</p>
-      <button @click="$refs.intro.style.display = 'none'">Play</button>
+      <div>
+        <p>Which StraitsTimes interactive graphics team member are you?</p>
+        <button @click="$refs.intro.style.display = 'none'">Play</button>
+      </div>
+
     </div>
     <svg id="flowchart" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" :viewBox="viewBox" enable-background="new 0 0 12000 8000" xml:space="preserve">
       <g id="BG">
@@ -2971,6 +2974,7 @@ function getPointAtLength (d, offset) {
     width: 100%;
   }
   #intro {
+    display: table;
     position: absolute;
     width: 70vw;
     height: 70vh;
@@ -2985,6 +2989,10 @@ function getPointAtLength (d, offset) {
     font-family: 'Courgette-Regular';
     font-size: 36px;
     color: white;
+  }
+  #intro div {
+    display: table-cell;
+    vertical-align: middle;
   }
   #intro p {
     padding: 0 10%;
