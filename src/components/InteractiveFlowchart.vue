@@ -2962,6 +2962,10 @@ function getPointAtLength (d, offset) {
 </script>
 
 <style>
+  body {
+    margin: 0;
+    overflow: hidden;
+  }
   div, svg {
     height: 100%;
     width: 100%;
