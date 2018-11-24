@@ -2922,7 +2922,7 @@ export default {
     drawPath(pathElement, duration) {
       TweenMax.to(pathElement, duration, {
         attr: { 'stroke-dashoffset': 0 },
-        ease: Power1.easeOut,
+        ease: Power1.easeInOut,
       })
     },
     moveTo(choice, pathElement, pathLength, duration) {
