@@ -2951,6 +2951,7 @@ export default {
   }
 }
 
+// because path has not been mounted yet
 const $path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
 // duplicate the d of the path
 function getPathLength (d) {
