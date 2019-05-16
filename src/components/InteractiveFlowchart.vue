@@ -8,7 +8,7 @@
     </div>
     <div id="navigation" v-else>
       <div class="button"><img src="back.svg"></div>
-      <div class="button"><img src="restart.svg"></div>
+      <div class="button" @click="backToStart"><img src="restart.svg"></div>
     </div>
     <graphic :viewBox="viewBox"></graphic>
   </div>
@@ -17,6 +17,8 @@
 <script>
 import { TweenMax } from 'gsap'
 import graphic from './Graphic.vue'
+const SPEED = 1500
+
 export default {
   components: { graphic },
   data () {
@@ -33,29 +35,9 @@ export default {
     }
   },
   mounted () {
-    const flowchart = document.getElementById('flowchart')
-    const start = flowchart.getElementById('n.start').getBBox()
-    this.x = start.x + (start.width / 2) // center point of node
-    this.y = start.y + (start.height / 2)// center point of node
-    this.width = start.width + 2 * this.padding
-    this.height = start.height + 2 * this.padding
-
-    const choices = flowchart.querySelectorAll('*[id^="c."]')
-    // For IE compatibility
-    Array.prototype.forEach.call(choices, (choice) => {
-      const pathElement = flowchart.getElementById(choice.id.replace('c.', 'p.'))
-      const pathLength = pathElement.getTotalLength()
-
-      // path not showing initially
-      pathElement.setAttribute('stroke-dasharray', pathLength)
-      pathElement.setAttribute('stroke-dashoffset', pathLength)
-
-      flowchart.getElementById(choice.id).addEventListener('click', () => {
-        const duration = pathLength / 1000
-        this.drawPath(pathElement, duration)
-        this.moveTo(choice.id, pathElement, pathLength, duration)
-      })
-    })
+    this.initialView()
+    this.clearPaths()
+    this.initiateFlow()
   },
   computed: {
     viewBox () {
@@ -78,6 +60,38 @@ export default {
     }
   },
   methods: {
+    initialView () {
+      this.flowchart = document.getElementById('flowchart')
+      const start = this.flowchart.getElementById('n.start').getBBox()
+      this.x = start.x + (start.width / 2) // center point of node
+      this.y = start.y + (start.height / 2)// center point of node
+      this.width = start.width + 2 * this.padding
+      this.height = start.height + 2 * this.padding
+    },
+    clearPaths () {
+      const paths = this.flowchart.querySelectorAll('*[id^="p."]')
+      Array.prototype.forEach.call(paths, path => {
+        const pathElement = this.flowchart.getElementById(path.id)
+        const pathLength = pathElement.getTotalLength()
+
+        // path not showing initially
+        pathElement.setAttribute('stroke-dasharray', pathLength)
+        pathElement.setAttribute('stroke-dashoffset', pathLength)
+      })
+    },
+    initiateFlow () {
+      const choices = this.flowchart.querySelectorAll('*[id^="c."]')
+      // For IE compatibility
+      Array.prototype.forEach.call(choices, choice => {
+        const pathElement = this.flowchart.getElementById(choice.id.replace('c.', 'p.'))
+        const pathLength = pathElement.getTotalLength()
+
+        this.flowchart.getElementById(choice.id).addEventListener('click', () => {
+          this.drawPath(pathElement, pathLength / SPEED)
+          this.moveTo(choice.id, pathElement, pathLength)
+        })
+      })
+    },
     drawPath (pathElement, duration) {
       TweenMax.to(pathElement, duration, {
         attr: { 'stroke-dashoffset': 0 },
@@ -86,7 +100,7 @@ export default {
     },
     moveTo (choice, pathElement, pathLength, duration) {
       const nextNode = choice.slice(2).split('--')[1]
-      const n = flowchart.getElementById('n.' + nextNode).getBBox()
+      const n = this.flowchart.getElementById('n.' + nextNode).getBBox()
       const finalPoint = pathElement.getPointAtLength(pathLength)
 
       this.x = n.x + (n.width / 2)
@@ -97,10 +111,27 @@ export default {
       this.targetPath = pathElement.getAttribute('d') + 'l' + difference
 
       this.travelling = true
-      TweenMax.fromTo(this.$data, duration, { offset: 0 }, {
+      TweenMax.fromTo(this.$data, pathLength / SPEED, { offset: 0 }, {
         offset: getPathLength(this.targetPath),
         width: n.width + 2 * this.padding,
         height: n.height + 2 * this.padding,
+        ease: Power1.easeInOut,
+        onComplete: () => {
+          this.travelling = false
+        }
+      })
+    },
+    backToStart () {
+      this.travelling = true
+
+      this.initialView()
+      this.clearPaths()
+
+      TweenMax.to(this.$data, 0, {
+        x: this.x,
+        y: this.y,
+        width: this.width,
+        height: this.height,
         ease: Power1.easeInOut,
         onComplete: () => {
           this.travelling = false
@@ -162,17 +193,18 @@ div, svg {
   width: 100%;
   height: 50px;
 }
-#navigation .button:first-child {
+#navigation .button {
   height: 40px;
   width: 40px;
   float: left;
   padding: 5px;
+  cursor: pointer;
+}
+#navigation .button:first-child {
+  float: left;
 }
 #navigation .button:last-child {
-  height: 40px;
-  width: 40px;
   float: right;
-  padding: 5px;
 }
 #navigation img {
   height: 100%;
