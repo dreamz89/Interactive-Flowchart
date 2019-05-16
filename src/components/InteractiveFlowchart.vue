@@ -7,7 +7,7 @@
       </div>
     </div>
     <div id="navigation" v-else>
-      <div class="button"><img src="back.svg"></div>
+      <div class="button" @click="backToPrevious"><img src="back.svg"></div>
       <div class="button" @click="backToStart"><img src="restart.svg"></div>
     </div>
     <graphic :viewBox="viewBox"></graphic>
@@ -26,6 +26,7 @@ export default {
       showIntro: true,
       padding: 100,
       travelling: false,
+      pathIds: [],
       targetPath: null,
       offset: 0,
       x: null,
@@ -87,32 +88,53 @@ export default {
         const pathLength = pathElement.getTotalLength()
 
         this.flowchart.getElementById(choice.id).addEventListener('click', () => {
-          this.drawPath(pathElement, pathLength / SPEED)
-          this.moveTo(choice.id, pathElement, pathLength)
+          this.pathIds.push(choice.id.replace('c.', 'p.'))
+          this.drawPath(pathElement, pathLength / SPEED, 0)
+          this.moveTo(choice.id, pathElement, pathLength, true)
         })
       })
     },
-    drawPath (pathElement, duration) {
+    drawPath (pathElement, duration, end) {
       TweenMax.to(pathElement, duration, {
-        attr: { 'stroke-dashoffset': 0 },
+        attr: { 'stroke-dashoffset': end },
         ease: Power1.easeInOut
       })
     },
-    moveTo (choice, pathElement, pathLength, duration) {
+    moveTo (choice, pathElement, pathLength, forwards) {
+      const startNode = choice.slice(2).split('--')[0]
       const nextNode = choice.slice(2).split('--')[1]
+      const s = this.flowchart.getElementById('n.' + startNode).getBBox()
       const n = this.flowchart.getElementById('n.' + nextNode).getBBox()
-      const finalPoint = pathElement.getPointAtLength(pathLength)
 
-      this.x = n.x + (n.width / 2)
-      this.y = n.y + (n.height / 2)
+      const startX = s.x + (s.width / 2)
+      const startY = s.y + (s.height / 2)
+
+      const nextX = n.x + (n.width / 2)
+      const nextY = n.y + (n.height / 2)
 
       // so that viewbox continues on from end of path to middle of node
-      const difference = [this.x - finalPoint.x, this.y - finalPoint.y].join(',')
-      this.targetPath = pathElement.getAttribute('d') + 'l' + difference
+      const startD = 'M' + startX + ',' + startY + 'L'
+      const nextD = 'L' + nextX + ',' + nextY
+      this.targetPath = pathElement.getAttribute('d').replace(/^M/, startD) + nextD
+
+      let fromOffset
+      let toOffset
+      if (forwards) {
+        fromOffset = 0
+        toOffset = getPathLength(this.targetPath)
+        this.x = nextX
+        this.y = nextY
+      } else {
+        fromOffset = getPathLength(this.targetPath)
+        toOffset = 0
+        this.x = startX
+        this.y = startY
+      }
 
       this.travelling = true
-      TweenMax.fromTo(this.$data, pathLength / SPEED, { offset: 0 }, {
-        offset: getPathLength(this.targetPath),
+
+      TweenMax.fromTo(this.$data, pathLength / SPEED, { offset: fromOffset }, {
+        offset: toOffset,
         width: n.width + 2 * this.padding,
         height: n.height + 2 * this.padding,
         ease: Power1.easeInOut,
@@ -123,6 +145,7 @@ export default {
     },
     backToStart () {
       this.travelling = true
+      this.pathIds = []
 
       this.initialView()
       this.clearPaths()
@@ -137,6 +160,19 @@ export default {
           this.travelling = false
         }
       })
+    },
+    backToPrevious () {
+      if (this.pathIds.length !== 0) {
+        // move path drawing backwards
+        const pathId = this.pathIds[this.pathIds.length - 1]
+        this.pathIds.pop()
+        const pathElementBack = this.flowchart.getElementById(pathId)
+        const pathElementBackLength = pathElementBack.getTotalLength()
+        this.drawPath(pathElementBack, pathElementBackLength / SPEED, pathElementBackLength)
+
+        // move viewport backwards
+        this.moveTo(pathId, pathElementBack, pathElementBackLength, false)
+      }
     }
   }
 }
