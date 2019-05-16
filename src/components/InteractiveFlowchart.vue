@@ -1,10 +1,14 @@
 <template>
   <div>
-    <div id="intro" ref="intro">
+    <div id="intro" v-if="showIntro">
       <div>
         <p>Which StraitsTimes interactive graphics team member are you?</p>
-        <button @click="$refs.intro.style.display = 'none'">Play</button>
+        <button @click="showIntro = false">Play</button>
       </div>
+    </div>
+    <div id="navigation" v-else>
+      <div class="button"><img src="back.svg"></div>
+      <div class="button"><img src="restart.svg"></div>
     </div>
     <graphic :viewBox="viewBox"></graphic>
   </div>
@@ -17,6 +21,7 @@ export default {
   components: { graphic },
   data () {
     return {
+      showIntro: true,
       padding: 100,
       travelling: false,
       targetPath: null,
@@ -92,8 +97,8 @@ export default {
       this.targetPath = pathElement.getAttribute('d') + 'l' + difference
 
       this.travelling = true
-      TweenMax.fromTo(this.$data, duration, { offset: 0 },
-      { offset: getPathLength(this.targetPath),
+      TweenMax.fromTo(this.$data, duration, { offset: 0 }, {
+        offset: getPathLength(this.targetPath),
         width: n.width + 2 * this.padding,
         height: n.height + 2 * this.padding,
         ease: Power1.easeInOut,
@@ -120,73 +125,94 @@ function getPointAtLength (d, offset) {
 </script>
 
 <style>
-  body {
-    margin: 0;
-    overflow: hidden;
-  }
-  div, svg {
-    height: 100%;
-    width: 100%;
-  }
+body {
+  margin: 0;
+  overflow: hidden;
+}
+div, svg {
+  height: 100%;
+  width: 100%;
+}
+#intro {
+  display: table;
+  position: absolute;
+  width: 70vw;
+  height: 70vh;
+  left: 50%;
+  margin-left: -35vw;
+  top: 50%;
+  margin-top: -35vh;
+  background-color: #5A9DDC;
+  border-radius: 30px;
+  border: 1px solid rgba(12,43,87,.5);
+  text-align: center;
+  font-family: 'Courgette-Regular';
+  font-size: 36px;
+  color: white;
+}
+#intro div {
+  display: table-cell;
+  vertical-align: middle;
+}
+#intro p {
+  padding: 0 10%;
+}
+#navigation {
+  position: absolute;
+  width: 100%;
+  height: 50px;
+}
+#navigation .button:first-child {
+  height: 40px;
+  width: 40px;
+  float: left;
+  padding: 5px;
+}
+#navigation .button:last-child {
+  height: 40px;
+  width: 40px;
+  float: right;
+  padding: 5px;
+}
+#navigation img {
+  height: 100%;
+  width: 100%;
+}
+button {
+  display: block;
+  margin: 0 auto;
+  font-family: 'FiraSans-Regular';
+  padding: 5px 25px;
+  border-radius: 25px;
+  outline: none;
+  background-color: #0FA3B1;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+/* all choices to look selectable */
+g[id^="c."] {
+  cursor: pointer;
+}
+g[id^="c."]:hover > path {
+  transform-origin: center center;
+  transform-box: fill-box;
+  transform: scale(1.03);
+}
+g[id^="c."]:hover > text {
+  font-size: 20.8px;
+}
+@font-face {
+  font-family: Courgette-Regular;
+  src: url(../assets/Courgette-Regular.ttf);
+}
+@font-face {
+  font-family: FiraSans-Regular;
+  src: url(../assets/FiraSans-Regular.ttf);
+}
+@media only screen and (max-width: 420px) {
   #intro {
-    display: table;
-    position: absolute;
-    width: 70vw;
-    height: 70vh;
-    left: 50%;
-    margin-left: -35vw;
-    top: 50%;
-    margin-top: -35vh;
-    background-color: #5A9DDC;
-    border-radius: 30px;
-    border: 1px solid rgba(12,43,87,.5);
-    text-align: center;
-    font-family: 'Courgette-Regular';
-    font-size: 36px;
-    color: white;
+    font-size: 30px;
   }
-  #intro div {
-    display: table-cell;
-    vertical-align: middle;
-  }
-  #intro p {
-    padding: 0 10%;
-  }
-  button {
-    display: block;
-    margin: 0 auto;
-    font-family: 'FiraSans-Regular';
-    padding: 5px 25px;
-    border-radius: 25px;
-    outline: none;
-    background-color: #0FA3B1;
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-  }
-  /* all choices to look selectable */
-  g[id^="c."] {
-    cursor: pointer;
-  }
-  g[id^="c."]:hover > path {
-    transform-origin: center center;
-    transform-box: fill-box;
-    transform: scale(1.03);
-  }
-  g[id^="c."]:hover > text {
-    font-size: 20.8px;
-  }
-  @font-face {
-    font-family: Courgette-Regular;
-    src: url(../assets/Courgette-Regular.ttf);
-  }
-  @font-face {
-    font-family: FiraSans-Regular;
-    src: url(../assets/FiraSans-Regular.ttf);
-  }
-  @media only screen and (max-width: 420px) {
-    #intro {
-      font-size: 30px;
-    }
-  }
+}
 </style>
